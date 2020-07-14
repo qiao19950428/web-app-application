@@ -1,0 +1,97 @@
+// 主⾊调，(⽤用于主体⽂文字)/背景色块/图形背景颜色/下划线/标签
+@color1: #F03A2E;
+// 所有绿⾊色字体/背景⾊块颜色/下划线
+@color2: #00AF3C;
+// 辅助色，⽤于辅助⽂文字/标签颜⾊
+@color3: #EF7F21;
+// 辅助色，⽤于辅助⽂文字/标签颜⾊
+@color4: #FFE6EC;
+// 辅助背景⾊
+@color5: #D6F7DD;
+// 辅助背景⾊
+@color6: #FFDDDA;
+// 辅助背景⾊
+@color7: #F9F9F9;
+// 底部背景⾊（应用所有页面背景）
+@color8: #F5F5F5;
+
+// 次要文字、提示性⽂字、说明⽂字
+@color9: #999999;
+// 常规⽂字、副标题、表格标题，时间、常规内容
+@color10: #666666;
+// 主体⽂字、内容标题、所有主题文字
+@color11: #333333;
+// 白色文字
+@color12: #FFFFFF;
+
+// 功能区用色
+@color13: #936ED7;
+@color14: #F85F5F;
+@color15: #FFB038;
+@color16: #5391FF;
+@color17: #FFC000;
+@color18: #00D9FF;
+@color19: #FF421D;
+@color20: #BFBFBF;
+
+// 纯白色背景
+@color21: #FFFFFF;
+@color22: #DDDDDD;
+// placeholder 色值
+@color23: #BFBFBF;
+@color24: #DFDFDF;
+
+// 深沪标签颜色
+@color25: #85D4E5;
+@color26: #92BBE9;
+// 无申购额度标签颜色
+@color27: #ECECEC;
+// 底部弹出框顶部颜色
+@color28: #FBF9FE;
+// 停止交易的背景色
+@color29: #E7E7E7;
+
+// 字体
+@font-family-medium: "PingFangSC-Medium";
+@font-family-regular: "PingFangSC-Regular";
+
+// 字体尺寸
+// 特殊处理⽂字、交易资产文字
+@font-size-special: 34px;
+// 突出主题⽂字、新闻详情⼤标题
+@font-size-big: 22px;
+// ⼤盘指数、新闻标题，特殊突出⽂字
+@font-size-light: 20px;
+// ⼀级标题
+@font-size-title: 17px;
+// 标题、名称、主体⽂字
+@font-size-label: 16px;
+// ⼤多数文字
+@font-size-text: 15px;
+// 切换项、部分文字
+@font-size-sub: 14px;
+// 辅助性信息、股票代码
+@font-size-msg: 13px;
+// 少部分辅助性信息
+@font-size-minor: 12px;
+// 底部菜单、少数标签内⽂字、提示性⽂字
+@font-size-menu: 11px;
+// 极少数文字
+@font-size-few: 10px;
+
+// 大多数行距
+@line-spacing: 10px;
+
+// 0.5px边框 需将父元素定位设置为relative 入参100%为上边框 默认下边框
+.line-smaller(@bottom: 0%){
+	content: "";
+    display: block;
+    position: absolute;
+    left: 0%;
+    bottom: @bottom;
+    width: 200%;
+    border-top: 1px solid @color24;
+    transform-origin: 0 0 ;
+    transform: scale(0.5, 0.5);
+    box-sizing: border-box;
+};

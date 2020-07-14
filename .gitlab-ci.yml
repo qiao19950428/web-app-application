@@ -1,0 +1,16 @@
+# gitLab自动化打包文件
+before_script:
+    # 使用子模块嵌入组件库
+    # - git submodule init
+    # - git submodule update --remote
+
+build:
+    stage: build
+    tags:
+        - h5-trade
+    script:
+        - bash build.sh
+    artifacts:
+        name: "6.9.2.$(date +%Y%m%d%H%M%S)"
+        paths:
+            - h5-trade/

@@ -1,0 +1,13 @@
+node_modules
+.vscode
+package-lock.json
+devBuild
+entryBuild
+h5-trade
+.DS_Store
+*.swp
+logs
+*.log
+*.zip
+*.tar.gz
+

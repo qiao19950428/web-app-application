@@ -1,0 +1,4 @@
+[submodule "h5-libs"]
+	path = h5-libs
+	url = https://github.com/qiao19950428/h5-libs.git
+	branch = master

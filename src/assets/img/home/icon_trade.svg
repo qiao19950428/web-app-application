@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16px" height="16px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 49.1 (51147) - http://www.bohemiancoding.com/sketch -->
+    <title>Combined Shape</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="0%" y1="23.1848299%" x2="100%" y2="76.2214157%" id="linearGradient-1">
+            <stop stop-color="#FB7E89" offset="0%"></stop>
+            <stop stop-color="#F64851" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="交易+个人" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="普通交易--未登录" transform="translate(-15.000000, -427.000000)" fill="url(#linearGradient-1)">
+            <g id="5" transform="translate(0.000000, 417.000000)">
+                <g id="交易" transform="translate(15.000000, 10.000000)">
+                    <path d="M8,1.27273258e-15 C12.4108592,0 16,3.58914078 16,8 C16,12.4108592 12.4108592,16 8,16 C3.58914078,16 0,12.4108592 0,8 C0,3.58914078 3.58914078,1.27273258e-15 8,1.27273258e-15 Z M12.4357499,7.10338164 C12.6789685,7.10338164 12.8962704,6.97149758 12.972027,6.7736715 C13.0477837,6.57584541 12.9660463,6.36111111 12.7706739,6.23768116 L10.799008,5 L10.1271663,5.77101449 L10.7212578,6.14468599 L3.56425013,6.14468599 L3.56425013,7.10338164 L12.4357499,7.10338164 Z M5.20099199,10.3700483 L5.87283366,9.59903382 L5.27874221,9.22536232 L12.4357499,9.22536232 L12.4357499,8.26666667 L3.56425013,8.26666667 C3.32103148,8.26666667 3.10372958,8.40024155 3.02797295,8.59637681 C2.95221633,8.7942029 3.03395374,9.0089372 3.22932609,9.13236715 L5.20099199,10.3700483 Z" id="Combined-Shape"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

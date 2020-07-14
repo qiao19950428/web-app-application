@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="19px" height="19px" viewBox="0 0 19 19" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 49.1 (51147) - http://www.bohemiancoding.com/sketch -->
+    <title>icon/选择/选中@2x</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="交易（两融）" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="icon/选择/选中">
+            <g>
+                <rect id="Combined-Shape" stroke="#F64851" x="0.5" y="0.5" width="18" height="18" rx="1"></rect>
+                <path d="M4.33389688,9.08741045 C4.12835131,8.90300429 3.81223298,8.92014117 3.62782682,9.12568674 C3.44342067,9.33123231 3.46055755,9.64735065 3.66610312,9.8317568 L8.05757633,13.7715872 C8.26229944,13.9552555 8.5769254,13.9390927 8.76174989,13.7354128 L15.4761724,6.33599878 C15.6617394,6.13150061 15.6463927,5.81529032 15.4418945,5.62972332 C15.2373963,5.44415632 14.9211861,5.45950306 14.7356191,5.66400122 L8.35529823,12.6952292 L4.33389688,9.08741045 Z" id="Path-3-Copy-3" fill="#F34A55"></path>
+            </g>
+        </g>
+    </g>
+</svg>

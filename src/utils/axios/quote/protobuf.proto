@@ -1,0 +1,609 @@
+syntax = "proto2";
+
+package protobuf;
+
+//个股综合begin
+//uri=/api/quote/pb_stockUnited
+message multi_stock_united_req
+{
+    repeated stock_united_req reqs = 1;
+}
+
+message multi_stock_united_rep
+{
+    repeated stock_united_rep reps = 1;
+}
+
+message stock_united_req
+{
+    required int32                  wMarketID                       =1;//市场代码
+    required string                 sPszCode                        =2;//股票代码
+    required int32                  wType                           =3;//股票类型
+    optional int64                  fields_bitMap                   =4;//需要基础详情字段的位图//可选的，有值即需要,下同
+    optional stock_kline_req        kline_req                       =5;//k线请求
+    optional stock_timeDivision_req timeDivision_req                =6;//分时请求
+    optional stock_tradeDetail_req  tradeDetail_req                 =7;//分笔请求 
+}
+
+message stock_united_rep
+{
+    optional stock_details_data         details_data        =1;//详情响应
+    optional stock_kline_rep            kline_data          =2;//k线响应
+    optional stock_timeDivision_rep     timeDivision_data   =3;//分时响应
+    optional stock_tradeDetail_rep      tradeDetail_data    =4;//分笔响应
+
+    // 响应新增证券代码和市场代码用于推送来唯一标识一只股票
+    optional int32                      wMarketID           =5;//市场代码
+    optional string                     sPszCode            =6;//股票代码
+}
+//个股综合end
+
+//买卖档位begin
+message stock_tradeClassify_data_repeated
+{
+    repeated stock_tradeClassify_data   tradeClassify_data  =1;
+    // 细化买卖档，推送需要
+    repeated price_volume_pair          buy_pair            =2;
+    repeated price_volume_pair          sell_pair           =3;
+}
+
+message price_volume_pair
+{
+    optional int32 price    =1;//价
+    optional int32 volume   =2;//量
+    optional int32 pos      =3;//增加标识该价位处于五档的位置的字段，推送变化档位需要（从0开始）
+}
+
+message stock_tradeClassify_data
+{
+    optional int32 nBjg =1;//买价
+    optional int32 nBsl =2;//买量
+    optional int32 nSjg =3;//卖价
+    optional int32 nSsl =4;//卖量
+}
+//买卖档位end
+
+//国元分笔明细数据增量下发改造
+//新增分笔明细接口
+//uri=/api/quote/pb_stockTickData
+message stockTick_request
+{
+    required int32     wMarketID	=1;//市场代码
+    required string    sPszCode     =2;//股票代码
+    required int32     wType        =3;//股票类型
+	required int32     count 		=4;//分笔个数
+	optional int32 	   dwTime 		=5;//分笔时间，服务器根据这个时间做为下发结束时间点 
+	optional bool      need_all_tick = 6;//是否需要当日全部历史分笔数据，一般置为false，如果需要整个交易日的分笔数据置为true
+}
+
+message stockTick_response
+{
+    repeated stock_tradeDetail_data tick = 1;//分笔明细详情
+}
+
+//分笔begin
+message stock_tradeDetail_req
+{
+    required int32 count =1;//分笔个数
+	optional int32 dwTime = 2;//分笔时间，服务器根据这个时间做为下发起始时间点
+}
+
+message stock_tradeDetail_rep
+{
+    optional int32  nBuyp                   = 1;//买盘
+    optional int32  nSelp                   = 2;//卖盘
+    repeated stock_tradeDetail_data data_arr= 3;//分笔数据
+}
+
+message stock_tradeDetail_data
+{
+    optional int32  dwTime  =1;//时间
+    optional string bCjlb   =2;//成交类别（B：买，S：卖，-：无状态）
+    optional int32  nZjcj   =3;//最近成交
+    optional int32  nCjss   =4;//成交数量
+    optional int32  nCjje   =5;//成交金额
+}
+//分笔end
+
+
+//分时begin
+//分时增量请求（为了兼容老版本5日分时下发，以need_new_line是否有赋值作为是否下发5日分时的标志，而不是用true或者false来做区分）
+//1.need_new_line 有值：
+//dwFSDate为0，dwFSTime为0，表明请求当前交易日从930开始所有的分时数据；
+//dwFSDate不为0，dwFSTime 为某一时间点比如1000，表明请求从10点(包含)开始至今的分时数据；（客户端理论上拿的服务器下发的最后一组数据的日期时间做入参）
+
+//2.need_new_line 不赋值，dwFSDate不为0，请求包括历史4日在内的数据：
+//在客户端缓存了历史4日分时数据的前提下，如果做增量请求，请求入参参照第一条，即need_new_line有值；
+
+//3.为保证客户端明确什么情况下需要全量数据，服务器响应数据中增加next_request_full_timeLine_flag标志，
+//next_request_full_timeLine_flag为true时，客户端需要做全量请求
+
+message stock_timeDivision_req
+{
+    required int32 dwFSDate =1;//分时日期
+    required int32 dwFSTime =2;//分时时间
+	
+	optional bool need_new_line = 3;//是否需要历史分时数据（如果需要包括历史4日分时在内的数据，对need_new_line进行赋值（不管是true或者false），同时dwFSDate不为0）
+    optional int64 timeLine_fields_bitMap = 4;//需要分时线详情字段的位图//可选的，有值即需要
+    optional bool timeline_nhg = 5;                       //逆回购标识，设置为true，其它类型不设置此标识
+}
+
+message stock_timeDivision_rep
+{
+    optional int32 nMaxVol                      =1;//分时中的最大成交量
+    repeated stock_timeDivision_data data_arr   =2;//分时数据 
+	optional bool next_request_full_timeLine_flag = 3;//客户端下一次请求全量数据的标志，true即请求全量
+	repeated stock_timeDivision_data_ext ext_arr  = 4;//对应的分时明细扩展字段
+    optional int32 nMaxCount                          = 5; //总点数
+}
+
+message stock_timeDivision_data
+{
+    optional int32 nTime    =1;//时间
+    optional int32 nZjcj    =2;//最近成交
+    optional int32 nZdf     =3;//涨跌幅
+    optional int32 nCjss    =4;//成交数量
+    optional int32 nCjje    =5;//成交金额
+    optional int32 nCjjj    =6;//成交均价
+    optional int32 nPos     =7;//该分时点的索引（从0开始）
+    optional int32 nDate    =8;//日期
+	optional int32 nZd      =9;//涨跌
+	optional int32 nHsl     =10;//换手率
+}
+
+message stock_timeDivision_data_ext
+{
+	optional int32 nDate    = 1;//日期
+	optional int32 nZrsp    = 2;//昨日收盘价
+	optional int32 nJrkp    = 3;//今日开盘价
+	optional int32 nZgcj    = 4;//今日分时中最高价
+	optional int32 nZdcj    = 5;//今日分时中最低价
+	optional int32 nZf      = 6;//今日振幅
+}
+//分时线详情可选字段枚举
+//客户端存在一个8字节的bitmap里发给服务器
+enum timeLine_optional_fields
+{
+	timeLine_zrsp          = 1;//昨日收盘
+	timeLine_jrkp          = 2;//今日开盘
+	timeLine_jrzg          = 3;//今日最高
+	timeLine_jrzd          = 4;//今日最低
+	timeLine_hsl           = 5;//换手率
+	timeLine_zf            = 6;//振幅
+}
+//分时end
+
+//api/quote/pb_stockCallAuctionData
+//开盘集合竞价行情
+message stock_call_auction_req
+{
+    required int32     wMarketID	=1;//市场代码
+    required string    sPszCode     =2;//股票代码
+    required int32     wType        =3;//股票类型
+}
+
+message stock_call_auction_resp
+{
+    optional int32 nDate             = 1;//日期
+    repeated stock_call_auction_data data_arr   = 2;//集合竞价详情
+	optional int32 nLastClosePrice   = 3;//昨日收盘价
+}
+message stock_call_auction_data
+{
+    optional int32 nTime   = 1;//时间
+	optional int32 nXncjj  = 2;//虚拟成交价
+	optional int32 nXnppl  = 3;//虚拟匹配量
+	optional int32 nXnwppl = 4;//虚拟未匹配量
+	optional string sDirection = 5;//剩余量方向//"B":买二侧有数据，说明在买侧剩余; "S":在卖二侧有数据，说明在卖侧剩余；"-":无方向
+}
+//开盘集合竞价行情end
+
+//k线begin
+message stock_kline_req
+{
+    required int32 wKXType  =1;//k线类型
+    required int32 dwKXDate =2;//0当前日期
+    required int32 dwKXTime =3;//0当前时间
+    required int32 wKXCount =4;//从dwKXDate,dwKXTime开始下发旧的wKXCount个klines(不包含dwKXDate,dwKXTime时的k线数据)
+    required int32 wFQType  =5;//复权类型
+    //true:从dwKXDate,dwKXTime开始下发新的wKXCount个klines(包含dwKXDate,dwKXTime时的k线数据,以便更新用); false:原逻辑不变
+    optional bool  reqNewKlines =6;
+    optional bool minkline_nhg = 7;  // 逆回购标识，逆回购设置为true，其它不设置此值
+}
+
+message stock_kline_rep
+{
+    optional int32              wKXType         =1;//k线类型
+    optional bool               needFQ          =2;//是否有复权 1：有   0：没有
+    repeated stock_kline_data   kline_data_arr  =3;//k线数组
+}
+
+message stock_kline_data
+{
+    optional int32 nDate    =1;//日期
+    optional int32 nTime    =2;//时间
+    optional int32 nYClose  =3;//昨日收盘价
+    optional int32 nOpen    =4;//开盘价
+    optional int32 nZgcj    =5;//最高成交
+    optional int32 nZdcj    =6;//最低成交
+    optional int32 nClose   =7;//收盘价
+    optional int32 nZdf     =8;//涨跌幅
+    optional int32 nCjje    =9;//成交金额
+    optional int32 nCjss    =10;//成交数量
+    optional int32 nCcl     =11;//持仓量
+    optional int32 nZd      =12;//涨跌
+    repeated int32 nMA      =13;//移动均线
+    repeated int32 nTech    =14;//移动均量
+	optional int32 nHsl     =15;//换手率
+	optional int32 nZf      =16;//振幅
+    optional int32 nPhzl    =17;//科创板定价交易盘后总量
+    optional int32 nPhze    =18;//科创板定价交易盘后总额
+}
+//k线end
+
+//可选字段枚举
+//客户端存在一个8字节的bitmap里发给服务器
+//现价是必须的，客户端通过涨幅判断现价颜色所以也是必须的
+enum optional_fields
+{
+    optional_tradeClassify           = 0;
+    optional_nZrsp                   = 1; 
+    optional_nJrkp                   = 2; 
+    optional_nZgcj                   = 3; 
+    optional_nZdcj                   = 4; 
+    optional_nCjss                   = 5; 
+    optional_nZf                     = 6; 
+    optional_nCjje                   = 7; 
+    optional_nBjg1                   = 8; 
+    optional_nSjg1                   = 9;
+    optional_nBsl1                   = 10;
+    optional_nSsl1                   = 11;
+    optional_nZd                     = 12;
+    optional_nLb                     = 13;
+    optional_n5Min                   = 14;
+    optional_nHsl                    = 15;
+    optional_nSyl                    = 16;
+    optional_wZjs                    = 17;
+    optional_wDjs                    = 18;
+    optional_wPjs                    = 19;
+    optional_nLTP                    = 20;
+    optional_nZSZ                    = 21;
+    optional_ExercisePrice           = 22;
+    optional_TotalLongPosition       = 23;
+    optional_cangCha                 = 24;
+    optional_ContractMultiplierUnit  = 25;
+    optional_SurplusDays             = 26;
+    optional_option_flag             = 27;
+    optional_nLimUp                  = 28;
+    optional_nLimDown                = 29;
+    optional_wCYDZS                  = 30;
+    optional_wStockStatus            = 31;
+    optional_blockID                 = 32;
+    optional_blockName               = 33;
+    optional_blockZDF                = 34;
+    optional_hgt_cv_data             = 35;
+    optional_gz_type_group           = 36;
+    optional_repurchase_name         = 37;
+    optional_APY                     = 38;
+    optional_earnings                = 39;
+    optional_funds_available_date    = 40;
+    optional_extend_details          = 41;
+    optional_finance_data            = 43;
+}
+
+//沪港通盘中熔断及盘后集合竞价begin
+//熔断和竞价并非一定存在，使用前先调用 has_xxx 方法判断是否存在该字段
+message hgt_cv_data
+{
+    optional int32  startTime       = 1;//开始时间  熔断 HHMMSS
+    optional int32  endTime         = 2;//结束时间  熔断 HHMMSS
+    optional int32  vcm_refPrice    = 3;//参考价    熔断
+    optional int32  vcm_lowPrice    = 4;//下限价    熔断
+    optional int32  vcm_upPrice     = 5;//上限价    熔断
+    optional int32  cas_refPrice    = 6;//参考价    竞价
+    optional int32  cas_lowPrice    = 7;//下限价    竞价
+    optional int32  cas_upPrice     = 8;//上限价    竞价
+    optional string direction       = 9;//不能配对买卖盘方向    竞价  四种状态：'B' 'S' 'N' ' '
+    optional int32  qty             = 10;//不能配对买卖盘量     竞价
+}
+//沪港通盘中熔断及盘后集合竞价end
+
+//个股基础详情begin
+message stock_details_data
+{
+    optional int32  marketID                = 1;//市场代码（默认下发）
+    optional string stock_code              = 2;//证券代码（默认下发）
+    optional string stock_name              = 3;//证券名称（默认下发）
+    optional string pszMark                 = 4;//特殊股票表示：港股:HK, 沪港通:HGT, 融资融券:R（默认下发）
+    optional int32  wType                   = 5;//股票类型（默认下发）
+    optional int32  nZrsp                   = 6;//昨日收盘
+    optional int32  nJrkp                   = 7;//今日开盘
+    optional int32  nZgcj                   = 8;//最高成交
+    optional int32  nZdcj                   = 9;//最低成交
+    optional int32  nZjcj                   = 10;//最近成交（默认下发）
+    optional int32  nCjss                   = 11;//成交数量
+    optional int32  nZf                     = 12;//振幅
+    optional int32  nCjje                   = 13;//成交金额
+    optional int32  nBjg1                   = 14;//买一价
+    optional int32  nSjg1                   = 15;//卖一价
+    optional int32  nBsl1                   = 16;//买一量
+    optional int32  nSsl1                   = 17;//卖一量
+    optional int32  nZd                     = 18;//涨跌
+    optional int32  nZdf                    = 19;//涨跌幅（默认下发）
+    optional int32  nLb                     = 20;//量比
+    optional int32  n5Min                   = 21;//5分钟涨速
+    optional bool   bSuspended              = 22;//停牌标识，0：正常，1：停牌（默认下发）
+    optional int32  nHsl                    = 23;//换手率
+    optional int32  nSyl                    = 24;//市盈率
+    optional string new_name                = 25;//全球股指新名称字段
+    optional int32  wStockStatus            = 26;//股票交易状态//quote-common中stock_quote.hpp定义://股票状态 0-无状态 1-开盘前 2-集合竞价 3-交易中 4-午间休市 5-已收盘 6-已收市：非交易日
+    optional int32  wZjs                    = 27;//涨家数
+    optional int32  wDjs                    = 28;//跌家数
+    optional int32  wPjs                    = 29;//平家数
+    optional int32  nLTP                    = 32;//流通盘
+    optional int32  nZSZ                    = 33;//总市值
+    optional int32  nRqSj                   = 34;//日期时间(MMDDHHmm)（默认下发）
+    optional int32  ExercisePrice           = 35;//行权价
+    optional int32  TotalLongPosition       = 36;//持仓量
+    optional int32  cangCha                 = 37;//仓差
+    optional int32  ContractMultiplierUnit  = 38;//单位
+    optional int32  SurplusDays             = 39;//剩余天数
+    optional string option_flag             = 40;//期权实时阶段及标识
+    optional int32  nLimUp                  = 41;//涨停价
+    optional int32  nLimDown                = 42;//跌停价
+    optional int32  wCYDZS                  = 43;//分时总的采样点数
+    optional stock_tradeClassify_data_repeated tradeClassify_data_arr = 44;//五档盘口数组
+    optional int32  blockID                 = 45;//板块id
+    optional string blockName               = 46;//板块名称
+    optional int32  blockZDF                = 47;//板块涨跌幅
+    optional hgt_cv_data hcd                = 48;//沪港通盘中熔断及盘后集合竞价（也支持港股）
+    optional gz_type_group gz_types         = 49;//股转类型组合
+    optional int32  week_num                = 50;//下发今日属于今年的第几周
+    optional string repurchase_name         = 51;//逆回购产品名称（代码即股票代码）
+    optional int32  APY                     = 52;//逆回购产品年收益率（客户端直接在数据后面加%号）
+    optional int32  earnings                = 53;//逆回购产品起购收益（深圳千份起，上海10万份起)
+    optional bool   is_ggt_object           = 54;//是否属于港股通标的证券（默认下发）
+    optional available_date ad              = 55;//逆回购产品的资金可用日
+    optional extend_details ext_d           = 56;//扩展详情字段
+    optional int32  earnings_new            = 57;//逆回购产品到期收益(每万元到期收益--国元需求:深市千份收益*10;沪市10万份收益/10)//
+    optional finance_data fin_d             = 59; // 基础财务数据
+    optional int32 date                     = 60; // 日期
+    optional int32 time                     = 61; // 时间
+    optional int32 cxMark                   = 62; //创新型股票(1为创新股票，0普通股票，其它值未定义)
+    optional stock_attribute sto_a          = 63; //股票属性字段//64预留给stock_pinyin,保持和东证版本一致
+    optional int32 nTradingPhaseCode        = 65; //产品实时阶段及标志// 1为停牌；2为临时停牌；目前仅有这两值有意义，其它暂时未做定义
+    optional int32 nSbsx                    = 66; //科创板定价交易申报上限
+    optional int32 nSbxx                    = 67; //科创板定价交易申报下限
+    optional int32 nPhzl                    = 68; //科创板定价交易盘后量
+    optional int32 nPhze                    = 69; //科创板定价交易盘后额
+    optional string stockMark               = 70; //个股属性标识
+}
+//个股基础详情end
+
+//股票属性字段
+message stock_attribute
+{
+    optional int32 no_profit               = 1; //是否盈利('N'盈利，'Y'不盈利，其它值未定义)
+    optional int32 weighted_voting_rights  = 2; //是否投票权差异('Y'是，'N'不是，其它值未定义)
+}
+
+// 扩展详情字段
+message extend_details
+{
+    optional int32  ma_price        = 1;// 成交均价
+    optional int32  wb              = 2;// 委比(%)
+    optional int32  wc              = 3;// 委差
+    optional int32  jzc             = 4;// 净资产
+    optional int32  sjl             = 5;// 市净率
+    optional int32  sy              = 6;// 每股收益
+    optional int32  quarter         = 7;// 报告季度
+    optional int32  ltg             = 8;// 流通股本
+    optional int32  sylj            = 9;// 市盈率（静）
+    optional int32  zgb             = 10;// 总股本
+    optional int32  new_vol         = 11;// 现手
+    optional int32 nZzcgb           = 12;// 总注册股本
+    optional int32 nFxgb            = 13;// 发行股本
+    optional int32 nTgtq            = 14;// 同股同权
+}
+
+// 原始财务数据
+message finance_data
+{
+    optional double  zgb            = 1; // 总股本
+    optional double  ltg            = 2; // 流通股
+    optional double  jlr            = 3; // 净利润
+    optional int32   quarter        = 4; // 报告截止月份
+}
+
+// 逆回购产品资金可用日及周几
+message available_date
+{
+    optional int32  date        = 1;// 
+    optional int32  day_of_week = 2;// 0~6（周日~周六）
+    optional int32  zkts        = 3;//占款天数
+    optional int32  hgjg        = 4;//回购价格
+    optional int32  pjjqll      = 5;//平均加权利率
+    optional int32  jqllzd      = 6;//加权利率涨跌
+    optional int32  zsjqpjll    = 7;//昨收加权平均利率
+    optional int32  zjjzd       = 8;//最近价涨跌
+    optional int32  interest_start_date = 9;//计息起始日期
+    optional int32  buy_date    = 10;//今日购买日期
+	optional int32  zjky_date = 11;//资金可用日期 //
+    optional int32  zjkq_date = 12;//资金可取日期 //等于 资金可用日 + 1 (若为非交易日则顺延)
+	optional int32  interest_stop_date = 13;//计息结束日期
+}
+
+//股转类型组合
+message gz_type_group
+{
+    optional int32  gqzr_type               = 1;//股转市场股权转让类型(见股票类型定义)
+    optional int32  lwts_type               = 2;//股转市场两网退市类型(见股票类型定义)
+    optional int32  gzfc_type               = 3;//股转市场股转分层类型(见股票类型定义)
+    optional int32  yxg_type                = 4;//股转市场股转优先股类型(见股票类型定义)
+    optional string zrzt                    = 5;//转让状态（'N'正常状态、'Y'首日挂牌、'D'新增股票挂牌转让）
+    optional bool   is_zr                   = 6;//是否接受转让（true 接受）
+    optional string cqcx		    = 7;//除权除息状态，‘N’表示正常状态、‘E’表示除权、‘D’表示除息、‘A’表示除权除息
+}
+
+//通用排序控制参数
+message rank_option
+{
+    required int32      wType           =1;//排序类型
+    required int32      bSort           =2;//排序字段
+    required bool       bDirect         =3;//0升序，1降序
+    required int32      wFrom           =4;//起始位置
+    required int32      wCount          =5;//请求数量
+    required int64      fields_bitMap   =6;//需要字段的位图
+    optional int32      wTotalCount     =7;//总数量(服务器响应时用)
+}
+
+//通用股票数组响应
+message multiStocks_rep
+{
+    optional rank_option        options =1;//排行选项
+    repeated stock_details_data dataArr =2;//详情数组
+}
+
+//自选股begin
+//uri=/api/quote/pb_selected
+message multi_selectedStocks_req
+{
+    repeated selectedStocks_req reqs = 1;
+}
+
+message multi_selectedStocks_rep
+{
+    repeated selectedStocks_rep reps = 1;
+}
+
+message selectedStocks_req
+{
+    required string pszCodes        =1;//代码链
+    required string marketList      =2;//市场链
+    required rank_option options    =3;
+}
+
+message selectedStocks_rep
+{
+    optional multiStocks_rep rep=1;
+}
+//自选股end
+
+//代码搜索begin
+//uri=/api/quote/pb_searchCode
+message searchCode_req
+{
+    required string characters  = 1;//请求的任意字符串(数字，拼音，utf-8编码的汉字等)
+    optional int32  begin_nums  = 2;//分页请求的起点(如果不传此字段默认0)
+    optional int32  max_nums    = 3;//如果有多个匹配结果返回的最大数量(如果不传此字段默认最大20条)
+}
+
+message searchCode_rep
+{
+    repeated codeList_add_repeated  add_arr     = 1;//匹配到的代码数组
+    optional int32                  total_nums  = 2;//服务器匹配到的总数
+}
+//代码搜索end
+
+//代码链begin
+//uri=/api/quote/pb_codeList
+message codeList_req
+{
+    required int32 version = 1;//版本号// 不能保障唯一性, 弃用 // 为了兼容客户端还是得传这个字段
+    optional string uuid_version = 2;// 升级后的唯一版本号
+}
+
+message codeList_rep
+{
+    optional int32 version                  = 1;
+    repeated codeList_add_repeated add_arr  = 2;//增加代码数组(客户端处理时，先删后加)
+    repeated codeList_del_repeated del_arr  = 3;//删除代码数组
+    optional string uuid_version = 4;// 升级后的唯一版本号
+}
+
+message codeList_add_repeated
+{
+    optional int32  market_id   = 1;//市场代码
+    optional int32  code_type   = 2;//股票类型
+    optional string code        = 3;//代码
+    optional string pinyin      = 4;//拼音
+    optional string pszMark     = 5;//特殊股票标示
+    optional string name        = 6;//股票名称
+    optional string stockMark   = 7;//个股属性标识
+}
+
+message codeList_del_repeated
+{
+    optional int32  market_id   = 1;
+    optional string code        = 2;
+}
+//代码链end
+
+//板块begin
+//uri=/api/quote/pb_blockRank
+message multi_blockRank_req
+{
+    repeated blockRank_req reqs = 1;
+}
+
+message multi_blockRank_rep
+{
+    repeated blockRank_rep reps = 1;
+}
+
+message blockRank_req
+{
+    required rank_option options    =1;
+}
+
+message blockRank_rep
+{
+    required rank_option options            =1;
+    repeated blockRank_repeated dataArr     =2;//板块排行数组
+}
+
+message blockRank_repeated
+{
+    optional int32  fZdf            = 1;//版块涨跌幅
+    optional string sCode           = 2;//板块代码
+    optional string pszBkName       = 3;//板块名称
+    optional string sStockCode      = 4;//领涨股代码
+    optional string pszStockName    = 5;//领涨股名称
+    optional int32  first_zdf       = 6;//领涨股涨跌幅
+    optional int32  first_price     = 7;//领涨股现价
+}
+//板块end
+
+//排序begin
+//uri=/api/quote/pb_stockRank
+message multi_stockRank_req
+{
+    repeated stockRank_req reqs = 1;
+}
+
+message multi_stockRank_rep
+{
+    repeated stockRank_rep reps = 1;
+}
+
+message stockRank_req
+{
+    required rank_option options    =1;
+    required int32      wMarketID   =2;
+    required string     sBKCode     =3;//板块代码(请求板块中的证券代码排行时用)
+}
+
+message block_desc_data
+{
+    optional int32 block_index      = 1;//板块指数
+    optional int32 block_upnum      = 2;//板块涨家数
+    optional int32 block_downnum    = 3;//板块跌家数
+    optional int32 block_zeronum    = 4;//板块平家数
+}
+
+message stockRank_rep
+{
+    optional multiStocks_rep rep=1;
+    optional block_desc_data block_rep = 2;
+}
+//排序end
